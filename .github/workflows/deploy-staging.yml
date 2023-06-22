@@ -1,0 +1,42 @@
+name: Deploy - Staging
+
+on:
+  push:
+    branches:
+      - develop
+
+jobs:
+  build:
+    name: Build Archive
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
+    - name: Build with Maven
+      run: mvn -B package -DskipTests --file pom.xml      
+    - name: Display structure of downloaded files
+      run: ls -R
+      working-directory: target/
+    - name: Upload JAR
+        #This uploads artifacts from your workflow allowing you to share data between jobs and store data once a workflow is complete.
+      uses: actions/upload-artifact@v2
+      with:
+        #Set artifact name
+        name: artifact
+        #From this path
+        path: ./target/demo-0.0.2.7-SNAPSHOT.jar 
+          
+  deploy-STG:
+    runs-on: ubuntu-latest
+    environment:
+      name: stg
+    needs: build
+    
+    if: github.ref == 'refs/heads/develop'
+    steps:
+      - name: Deploy 
+        shell: bash
+        run: |
+          echo "Deploy STG"
